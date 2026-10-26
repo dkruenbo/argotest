@@ -4,182 +4,396 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <title>Kubernetes Web Lab</title>
+  <meta name="theme-color" content="#f7f6f1">
+  <meta name="description" content="Find dit næste sommerhus ved havet med Sollyst. Håndplukkede ferieboliger i hele Danmark.">
+  <title>Sollyst — Sommerhuse med plads til at lande</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
       color-scheme: light;
-      --ink: #172421;
-      --muted: #52635e;
-      --paper: #f3f7f4;
-      --surface: #ffffff;
-      --line: #c9d7d0;
-      --green: #176b50;
-      --lime: #d4ec76;
-      --blue: #2361c8;
-      --amber: #d87530;
+      --ink: #183b36;
+      --muted: #64756d;
+      --paper: #f7f6f1;
+      --white: #fffefa;
+      --line: #dedfd4;
+      --green: #245c4b;
+      --green-dark: #173f35;
+      --coral: #e77f61;
+      --sun: #f1cc79;
+      --serif: "Playfair Display", Georgia, serif;
+      --sans: "DM Sans", "Avenir Next", sans-serif;
     }
 
     * { box-sizing: border-box; }
-
+    html { scroll-behavior: smooth; }
     body {
       margin: 0;
-      min-height: 100vh;
       color: var(--ink);
-      background-color: var(--paper);
-      background-image: linear-gradient(90deg, transparent 39px, rgba(23, 107, 80, .06) 40px),
-                        linear-gradient(transparent 39px, rgba(23, 107, 80, .06) 40px);
-      background-size: 40px 40px;
-      font-family: Inter, "Avenir Next", Avenir, sans-serif;
+      background: var(--paper);
+      font-family: var(--sans);
+      -webkit-font-smoothing: antialiased;
     }
+    a { color: inherit; text-decoration: none; }
+    button, input, select { font: inherit; }
+    button, a, input, select { -webkit-tap-highlight-color: transparent; }
+    .page-width { width: min(100% - 64px, 1280px); margin-inline: auto; }
 
-    .topbar {
+    .site-header {
+      position: relative;
+      z-index: 2;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 16px;
-      padding: 18px clamp(20px, 5vw, 72px);
-      border-bottom: 1px solid var(--line);
-      background: rgba(243, 247, 244, .94);
+      min-height: 82px;
+      padding: 0 max(32px, calc((100vw - 1280px) / 2));
+      background: var(--paper);
     }
+    .brand { display: inline-flex; align-items: center; gap: 10px; }
+    .brand-sun { width: 25px; height: 25px; color: var(--coral); }
+    .brand-name { font: 600 27px/1 var(--serif); letter-spacing: 0; }
+    .main-nav { display: flex; align-items: center; gap: 38px; color: #435b51; font-size: 13px; }
+    .main-nav a { transition: color .2s ease; }
+    .main-nav a:hover { color: var(--coral); }
+    .header-contact { display: inline-flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; }
+    .header-contact svg { width: 17px; height: 17px; }
 
-    .brand {
+    .hero {
+      position: relative;
       display: flex;
       align-items: center;
-      gap: 12px;
-      font-size: 14px;
-      font-weight: 750;
+      min-height: min(690px, 76vw);
+      overflow: hidden;
+      color: white;
+      background: #506d63;
     }
+    .hero-image, .hero-shade { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .hero-image { object-fit: cover; object-position: center 56%; animation: reveal 1.2s ease both; }
+    .hero-shade { background: linear-gradient(90deg, rgba(15, 42, 35, .58) 0%, rgba(20, 44, 37, .25) 47%, rgba(17, 36, 32, .02) 100%), linear-gradient(0deg, rgba(14, 36, 30, .3), transparent 42%); }
+    .hero-content { position: relative; width: min(100% - 64px, 1280px); margin: -20px auto 44px; animation: rise .8s .1s ease both; }
+    .hero-kicker { display: flex; align-items: center; gap: 10px; margin: 0 0 19px; font-size: 11px; font-weight: 700; letter-spacing: 0; text-transform: uppercase; }
+    .hero-kicker::before { width: 28px; height: 1px; background: var(--sun); content: ""; }
+    h1, h2, h3, p { margin-top: 0; }
+    .hero h1 { max-width: 640px; margin-bottom: 17px; font: 500 clamp(48px, 6.5vw, 86px)/.99 var(--serif); letter-spacing: 0; }
+    .hero-copy { max-width: 430px; margin-bottom: 0; color: rgba(255,255,255,.9); font-size: 16px; line-height: 1.65; }
+    .hero-note { position: absolute; right: max(32px, calc((100vw - 1280px) / 2)); bottom: 48px; display: flex; align-items: center; gap: 10px; color: white; font-size: 12px; }
+    .hero-note svg { width: 17px; height: 17px; color: var(--sun); }
 
-    .brand-mark {
+    .search-wrap { position: relative; z-index: 1; margin-top: -38px; }
+    .search-form {
       display: grid;
-      width: 34px;
-      aspect-ratio: 1;
-      place-items: center;
-      color: var(--paper);
-      background: var(--green);
-      border-radius: 8px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 12px;
-    }
-
-    .environment {
-      display: inline-flex;
+      grid-template-columns: 1.2fr 1fr 1fr .85fr auto;
       align-items: center;
-      gap: 8px;
-      padding: 7px 10px;
-      border: 1px solid var(--line);
-      border-radius: 6px;
-      color: var(--muted);
-      background: var(--surface);
-      font-size: 12px;
-    }
-
-    .environment::before {
-      width: 8px;
-      height: 8px;
-      content: "";
-      border-radius: 50%;
-      background: var(--amber);
-    }
-
-    main {
-      width: min(100% - 40px, 1040px);
-      margin: 0 auto;
-      padding: clamp(52px, 10vh, 104px) 0 64px;
-    }
-
-    .eyebrow {
-      margin: 0 0 18px;
-      color: var(--green);
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 12px;
-      font-weight: 700;
-    }
-
-    h1 {
-      max-width: 720px;
-      margin: 0;
-      font-size: clamp(42px, 7vw, 76px);
-      line-height: 1.02;
-      font-weight: 760;
-    }
-
-    .intro {
-      max-width: 650px;
-      margin: 24px 0 0;
-      color: var(--muted);
-      font-size: 18px;
-      line-height: 1.65;
-    }
-
-    .rule {
-      width: 72px;
-      height: 6px;
-      margin: 34px 0 46px;
+      gap: 0;
+      width: min(100%, 1050px);
+      min-height: 94px;
+      padding: 12px 14px 12px 23px;
+      border: 1px solid rgba(24,59,54,.09);
       border-radius: 4px;
-      background: var(--lime);
+      background: var(--white);
+      box-shadow: 0 14px 40px rgba(24,59,54,.12);
     }
+    .search-field { min-width: 0; padding: 8px 18px; border-left: 1px solid var(--line); }
+    .search-field:first-child { padding-left: 0; border-left: 0; }
+    .search-field label { display: block; margin-bottom: 7px; color: var(--muted); font-size: 10px; font-weight: 700; }
+    .search-field select, .search-field input { width: 100%; min-width: 0; padding: 0; border: 0; outline: 0; color: var(--ink); background: transparent; font-size: 13px; }
+    .search-field input::-webkit-calendar-picker-indicator { opacity: .65; }
+    .search-button { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 54px; padding: 0 21px; border: 0; border-radius: 3px; color: white; background: var(--green); font-size: 13px; font-weight: 600; cursor: pointer; transition: background .2s ease, transform .2s ease; }
+    .search-button:hover { background: var(--green-dark); transform: translateY(-1px); }
+    .search-button svg { width: 16px; height: 16px; }
+    .search-status { min-height: 20px; margin: 9px 0 0 3px; color: var(--muted); font-size: 12px; }
 
-    .details {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      border-top: 1px solid var(--line);
-      border-bottom: 1px solid var(--line);
-      background: rgba(255, 255, 255, .82);
+    .intro-row { display: flex; align-items: end; justify-content: space-between; gap: 30px; padding-top: 93px; padding-bottom: 34px; }
+    .section-kicker { margin-bottom: 12px; color: var(--coral); font-size: 10px; font-weight: 700; letter-spacing: 0; text-transform: uppercase; }
+    .section-title { margin-bottom: 0; font: 500 clamp(34px, 4vw, 48px)/1.1 var(--serif); letter-spacing: 0; }
+    .section-copy { max-width: 390px; margin: 0 0 3px; color: var(--muted); font-size: 14px; line-height: 1.7; }
+    .homes-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; padding-bottom: 102px; }
+    .home-card { min-width: 0; animation: rise .55s ease both; }
+    .home-card:nth-child(2) { animation-delay: .1s; }
+    .home-card:nth-child(3) { animation-delay: .2s; }
+    .home-photo { position: relative; overflow: hidden; aspect-ratio: 1.27; background: #d9dfd3; }
+    .home-photo img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform .5s ease; }
+    .home-card:hover .home-photo img { transform: scale(1.035); }
+    .home-badge { position: absolute; top: 14px; left: 14px; padding: 7px 10px; color: var(--ink); background: var(--white); font-size: 10px; font-weight: 700; }
+    .home-info { display: flex; align-items: start; justify-content: space-between; gap: 14px; padding-top: 15px; }
+    .home-location { margin-bottom: 5px; color: var(--muted); font-size: 11px; }
+    .home-title { margin-bottom: 7px; font: 500 22px/1.2 var(--serif); }
+    .home-specs { color: var(--muted); font-size: 11px; }
+    .home-price { flex: 0 0 auto; padding-top: 2px; text-align: right; font-size: 13px; font-weight: 700; }
+    .home-price small { display: block; margin-top: 5px; color: var(--muted); font-size: 10px; font-weight: 400; }
+    .empty-state { display: none; grid-column: 1 / -1; padding: 50px 20px; color: var(--muted); text-align: center; }
+
+    .places-band { padding: 70px 0 76px; color: var(--white); background: var(--green-dark); }
+    .places-heading { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 33px; }
+    .places-band .section-kicker { color: var(--sun); }
+    .places-band .section-title { color: var(--white); }
+    .places-link { display: inline-flex; align-items: center; gap: 9px; padding-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,.46); font-size: 12px; }
+    .places-link svg { width: 15px; height: 15px; transition: transform .2s ease; }
+    .places-link:hover svg { transform: translateX(3px); }
+    .places-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+    .place { position: relative; display: flex; align-items: end; min-height: 215px; overflow: hidden; padding: 18px; isolation: isolate; background: #49655c; }
+    .place::before { position: absolute; z-index: -2; inset: 0; content: ""; background: var(--place-image) center / cover; transition: transform .45s ease; }
+    .place::after { position: absolute; z-index: -1; inset: 0; content: ""; background: linear-gradient(0deg, rgba(14,34,29,.65), transparent 72%); }
+    .place:hover::before { transform: scale(1.05); }
+    .place span { font: 500 25px/1.1 var(--serif); }
+
+    .promise { display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 70px; padding-top: 100px; padding-bottom: 100px; }
+    .promise-image { min-height: 405px; background: #dce3d8 url("https://images.unsplash.com/photo-1449158743715-0a90ebb6d2d8?auto=format&fit=crop&w=1100&q=85") center / cover; }
+    .promise-copy { max-width: 470px; }
+    .promise-copy .section-title { margin-bottom: 18px; }
+    .promise-copy > p:not(.section-kicker) { color: var(--muted); font-size: 14px; line-height: 1.8; }
+    .promise-points { display: grid; grid-template-columns: 1fr 1fr; gap: 17px 23px; margin: 27px 0 0; padding: 23px 0 0; border-top: 1px solid var(--line); list-style: none; }
+    .promise-points li { display: flex; align-items: center; gap: 9px; font-size: 12px; }
+    .promise-points svg { flex: 0 0 auto; width: 16px; height: 16px; color: var(--green); }
+
+    .site-footer { padding: 42px 0; color: var(--white); background: #14382f; }
+    .footer-row { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+    .site-footer .brand-sun { color: var(--sun); }
+    .site-footer .brand-name { color: var(--white); }
+    .footer-note { margin: 0; color: rgba(255,255,255,.7); font-size: 11px; }
+    .footer-links { display: flex; gap: 23px; color: rgba(255,255,255,.86); font-size: 11px; }
+
+    @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes reveal { from { opacity: .6; transform: scale(1.025); } to { opacity: 1; transform: scale(1); } }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
     }
-
-    .detail {
-      min-height: 128px;
-      padding: 22px;
+    @media (max-width: 900px) {
+      .page-width { width: min(100% - 48px, 1280px); }
+      .site-header { padding-inline: 24px; }
+      .main-nav { gap: 20px; }
+      .header-contact { font-size: 0; }
+      .hero { min-height: 600px; }
+      .hero-content { width: min(100% - 48px, 1280px); }
+      .hero-note { right: 24px; }
+      .search-form { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 0; padding: 14px; }
+      .search-field { padding: 8px 12px; }
+      .search-field:nth-child(3) { border-left: 0; }
+      .search-button { grid-column: 1 / -1; margin-top: 5px; }
+      .homes-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .home-card:last-of-type { display: none; }
+      .places-grid { grid-template-columns: repeat(2, 1fr); }
+      .promise { gap: 40px; }
     }
-
-    .detail + .detail { border-left: 1px solid var(--line); }
-
-    .detail-label {
-      display: block;
-      margin-bottom: 12px;
-      color: var(--muted);
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 11px;
-    }
-
-    .detail-value {
-      font-size: 17px;
-      font-weight: 700;
-      overflow-wrap: anywhere;
-    }
-
-    footer {
-      margin-top: 30px;
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    @media (max-width: 640px) {
-      .topbar { align-items: flex-start; }
-      .environment { max-width: 48%; text-align: center; }
-      .details { grid-template-columns: 1fr; }
-      .detail { min-height: auto; }
-      .detail + .detail { border-top: 1px solid var(--line); border-left: 0; }
+    @media (max-width: 600px) {
+      .page-width { width: calc(100% - 40px); }
+      .site-header { min-height: 70px; padding-inline: 20px; }
+      .brand-name { font-size: 25px; }
+      .main-nav { gap: 14px; font-size: 11px; }
+      .main-nav a:last-child { display: none; }
+      .header-contact { display: none; }
+      .hero { align-items: end; min-height: 610px; }
+      .hero-image { object-position: 58% center; }
+      .hero-shade { background: linear-gradient(90deg, rgba(15,42,35,.46), rgba(20,44,37,.1)), linear-gradient(0deg, rgba(14,36,30,.52), transparent 82%); }
+      .hero-content { width: calc(100% - 40px); margin: 0 auto 104px; }
+      .hero h1 { max-width: 370px; font-size: clamp(49px, 14vw, 70px); }
+      .hero-copy { max-width: 340px; font-size: 14px; }
+      .hero-note { right: 20px; bottom: 22px; font-size: 10px; }
+      .search-wrap { margin-top: -58px; }
+      .search-form { grid-template-columns: 1fr 1fr; width: 100%; padding: 10px; }
+      .search-field { padding: 9px 10px; }
+      .search-field:nth-child(2) { border-left: 1px solid var(--line); }
+      .search-field:nth-child(3) { border-left: 0; }
+      .search-field label { font-size: 9px; }
+      .search-field select, .search-field input { font-size: 12px; }
+      .search-status { padding-inline: 2px; }
+      .intro-row { display: block; padding-top: 64px; padding-bottom: 25px; }
+      .section-copy { margin-top: 14px; font-size: 13px; }
+      .homes-grid { grid-template-columns: 1fr; gap: 28px; padding-bottom: 70px; }
+      .home-card:last-of-type { display: block; }
+      .home-photo { aspect-ratio: 1.35; }
+      .home-title { font-size: 21px; }
+      .places-band { padding: 58px 0; }
+      .places-heading { display: block; }
+      .places-link { margin-top: 17px; }
+      .places-grid { gap: 10px; }
+      .place { min-height: 155px; padding: 13px; }
+      .place span { font-size: 20px; }
+      .promise { grid-template-columns: 1fr; gap: 28px; padding-top: 68px; padding-bottom: 68px; }
+      .promise-image { min-height: 290px; }
+      .promise-points { gap: 15px 10px; }
+      .promise-points li { align-items: start; font-size: 11px; }
+      .footer-row { align-items: start; flex-direction: column; }
+      .footer-links { flex-wrap: wrap; gap: 15px; }
     }
   </style>
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand"><span class="brand-mark">K8S</span><span>WEB LAB</span></div>
-    <span class="environment">TESTMILJØ · STATISK SIDE</span>
+  <header class="site-header">
+    <a class="brand" href="#top" aria-label="Sollyst, forsiden">
+      <svg class="brand-sun" viewBox="0 0 32 32" fill="none" aria-hidden="true"><circle cx="16" cy="16" r="6.5" fill="currentColor"/><path d="M16 1.5v5M16 25.5v5M30.5 16h-5M6.5 16h-5M26.25 5.75l-3.54 3.54m-13.42 13.42-3.54 3.54m20.5 0-3.54-3.54M9.29 9.29 5.75 5.75" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+      <span class="brand-name">sollyst</span>
+    </a>
+    <nav class="main-nav" aria-label="Hovedmenu">
+      <a href="#sommerhuse">Sommerhuse</a>
+      <a href="#destinationer">Destinationer</a>
+      <a href="#om-sollyst">Om Sollyst</a>
+    </nav>
+    <a class="header-contact" href="mailto:hej@sollyst.dk">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5h16v14H4zM4 7l8 6 8-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Skriv til os
+    </a>
   </header>
-  <main>
-    <p class="eyebrow">ARGO CD / NGINX / KUBERNETES</p>
-    <h1>Fra Git til browser.</h1>
-    <p class="intro">Denne side leveres af NGINX i jeres Kubernetes-klynge. Argo CD holder deploymentet i tråd med Git, mens HPA kan tilføje pods, når belastningen stiger.</p>
-    <div class="rule" aria-hidden="true"></div>
-    <section class="details" aria-label="Testmiljøets komponenter">
-      <div class="detail"><span class="detail-label">DEPLOYMENT</span><span class="detail-value">web-load-test</span></div>
-      <div class="detail"><span class="detail-label">MANIFESTKILDE</span><span class="detail-value">Git via Argo CD</span></div>
-      <div class="detail"><span class="detail-label">AUTOSKALERING</span><span class="detail-value">HPA · 1–6 pods</span></div>
+
+  <main id="top">
+    <section class="hero" aria-labelledby="hero-title">
+      <img class="hero-image" src="https://images.unsplash.com/photo-1536877001875-8245b88e97c5?auto=format&fit=crop&w=2200&q=90" alt="Små sommerhuse ved havet" fetchpriority="high">
+      <div class="hero-shade" aria-hidden="true"></div>
+      <div class="hero-content">
+        <p class="hero-kicker">Håndplukkede steder i Danmark</p>
+        <h1 id="hero-title">Find roen.<br>Find Sollyst.</h1>
+        <p class="hero-copy">Et lille pusterum gør en stor forskel. Find et sommerhus, hvor dagene får lov at gå lidt langsommere.</p>
+      </div>
+      <div class="hero-note"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 21s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12Z" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="9" r="2.2" stroke="currentColor" stroke-width="1.7"/></svg>Små steder. Store pauser.</div>
     </section>
-    <footer>Sidens HTML ligger i Git og synkroniseres til NGINX via en ConfigMap.</footer>
+
+    <div class="search-wrap page-width">
+      <form class="search-form" id="home-search">
+        <div class="search-field">
+          <label for="destination">Hvor vil I hen?</label>
+          <select id="destination" name="destination">
+            <option value="alle">Hele Danmark</option>
+            <option value="nordsjaelland">Nordsjælland</option>
+            <option value="fyn">Fyn</option>
+            <option value="vestkysten">Vestkysten</option>
+          </select>
+        </div>
+        <div class="search-field">
+          <label for="arrival">Ankomst</label>
+          <input id="arrival" name="arrival" type="date" aria-label="Ankomstdato">
+        </div>
+        <div class="search-field">
+          <label for="departure">Afrejse</label>
+          <input id="departure" name="departure" type="date" aria-label="Afrejsedato">
+        </div>
+        <div class="search-field">
+          <label for="guests">Antal gæster</label>
+          <select id="guests" name="guests">
+            <option value="1">1 gæst</option>
+            <option value="2" selected>2 gæster</option>
+            <option value="4">4 gæster</option>
+            <option value="6">6 gæster</option>
+            <option value="8">8 gæster</option>
+          </select>
+        </div>
+        <button class="search-button" type="submit">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8" stroke="currentColor" stroke-width="1.8"/><path d="m16 16 4.2 4.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          Find sommerhus
+        </button>
+      </form>
+      <p class="search-status" id="search-status" aria-live="polite"></p>
+    </div>
+
+    <section class="page-width" id="sommerhuse" aria-labelledby="homes-title">
+      <div class="intro-row">
+        <div>
+          <p class="section-kicker">Gode steder at lande</p>
+          <h2 class="section-title" id="homes-title">Sommerhuse med sjæl</h2>
+        </div>
+        <p class="section-copy">Fra morgenbad og kaffe på terrassen til lange aftener med dem, du holder af.</p>
+      </div>
+      <div class="homes-grid" id="homes-grid">
+        <article class="home-card" data-region="nordsjaelland" data-guests="6">
+          <div class="home-photo">
+            <img src="https://images.unsplash.com/photo-1449158743715-0a90ebb6d2d8?auto=format&fit=crop&w=900&q=85" alt="Sommerhus mellem høje træer" loading="lazy">
+            <span class="home-badge">Tæt på stranden</span>
+          </div>
+          <div class="home-info">
+            <div><p class="home-location">Tisvildeleje · Nordsjælland</p><h3 class="home-title">Det lille fyrtårn</h3><p class="home-specs">6 gæster · 3 soveværelser · Havudsigt</p></div>
+            <p class="home-price">Fra 1.250 kr.<small>pr. nat</small></p>
+          </div>
+        </article>
+        <article class="home-card" data-region="fyn" data-guests="4">
+          <div class="home-photo">
+            <img src="https://images.unsplash.com/photo-1449158743715-0a90ebb6d2d8?auto=format&fit=crop&w=900&q=85" alt="Hvidt feriehus i fredelig grøn have" loading="lazy">
+            <span class="home-badge">Solrig terrasse</span>
+          </div>
+          <div class="home-info">
+            <div><p class="home-location">Sydfyn · Fyn</p><h3 class="home-title">Huset mellem æbletræerne</h3><p class="home-specs">4 gæster · 2 soveværelser · Have</p></div>
+            <p class="home-price">Fra 980 kr.<small>pr. nat</small></p>
+          </div>
+        </article>
+        <article class="home-card" data-region="vestkysten" data-guests="8">
+          <div class="home-photo">
+            <img src="https://images.unsplash.com/photo-1536877001875-8245b88e97c5?auto=format&fit=crop&w=900&q=85" alt="Sommerhuse tæt ved stranden" loading="lazy">
+            <span class="home-badge">Plads til hele familien</span>
+          </div>
+          <div class="home-info">
+            <div><p class="home-location">Hvide Sande · Vestkysten</p><h3 class="home-title">Klitterne kalder</h3><p class="home-specs">8 gæster · 4 soveværelser · Sauna</p></div>
+            <p class="home-price">Fra 1.490 kr.<small>pr. nat</small></p>
+          </div>
+        </article>
+        <p class="empty-state" id="empty-state">Vi fandt ikke et sommerhus med plads til det antal gæster. Prøv et andet valg.</p>
+      </div>
+    </section>
+
+    <section class="places-band" id="destinationer" aria-labelledby="places-title">
+      <div class="page-width">
+        <div class="places-heading">
+          <div><p class="section-kicker">Danmark kalder</p><h2 class="section-title" id="places-title">Hvor går turen hen?</h2></div>
+          <a class="places-link" href="#sommerhuse">Se alle sommerhuse <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+        </div>
+        <div class="places-grid">
+          <a class="place" href="#sommerhuse" style="--place-image: url('https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=650&q=80')"><span>Nordsjælland</span></a>
+          <a class="place" href="#sommerhuse" style="--place-image: url('https://images.unsplash.com/photo-1473116763249-2faaef81ccda?auto=format&fit=crop&w=650&q=80')"><span>Fyn & øerne</span></a>
+          <a class="place" href="#sommerhuse" style="--place-image: url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=650&q=80')"><span>Vestkysten</span></a>
+          <a class="place" href="#sommerhuse" style="--place-image: url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=650&q=80')"><span>Bornholm</span></a>
+        </div>
+      </div>
+    </section>
+
+    <section class="promise page-width" id="om-sollyst" aria-labelledby="promise-title">
+      <div class="promise-image" role="img" aria-label="Et hyggeligt feriehus i grønne omgivelser"></div>
+      <div class="promise-copy">
+        <p class="section-kicker">Det skal føles nemt</p>
+        <h2 class="section-title" id="promise-title">Vi har tænkt på det meste.</h2>
+        <p>Sollyst er til dig, der længes efter lidt mere luft i kalenderen og lidt mindre på programmet. Vi finder de steder, man får lyst til at blive lidt længere.</p>
+        <ul class="promise-points">
+          <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5 12 4 4L19 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Personligt udvalgte huse</li>
+          <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5 12 4 4L19 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Lokale tips med i pakken</li>
+          <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5 12 4 4L19 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Plads til at tage det roligt</li>
+          <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5 12 4 4L19 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Danske steder, vi holder af</li>
+        </ul>
+      </div>
+    </section>
   </main>
+
+  <footer class="site-footer">
+    <div class="page-width footer-row">
+      <a class="brand" href="#top" aria-label="Sollyst, tilbage til toppen">
+        <svg class="brand-sun" viewBox="0 0 32 32" fill="none" aria-hidden="true"><circle cx="16" cy="16" r="6.5" fill="currentColor"/><path d="M16 1.5v5M16 25.5v5M30.5 16h-5M6.5 16h-5M26.25 5.75l-3.54 3.54m-13.42 13.42-3.54 3.54m20.5 0-3.54-3.54M9.29 9.29 5.75 5.75" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+        <span class="brand-name">sollyst</span>
+      </a>
+      <p class="footer-note">Små steder. Store pauser. &copy; 2026 Sollyst</p>
+      <div class="footer-links"><a href="mailto:hej@sollyst.dk">Kontakt</a><a href="#om-sollyst">Om os</a><a href="#top">Til toppen ↑</a></div>
+    </div>
+  </footer>
+  <script>
+    const searchForm = document.querySelector("#home-search");
+    const searchStatus = document.querySelector("#search-status");
+    const homeCards = [...document.querySelectorAll(".home-card")];
+    const emptyState = document.querySelector("#empty-state");
+
+    searchForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const destination = document.querySelector("#destination").value;
+      const guests = Number(document.querySelector("#guests").value);
+      let visibleHomes = 0;
+
+      homeCards.forEach((card) => {
+        const matchesDestination = destination === "alle" || card.dataset.region === destination;
+        const matchesGuests = Number(card.dataset.guests) >= guests;
+        card.hidden = !matchesDestination || !matchesGuests;
+        if (!card.hidden) visibleHomes += 1;
+      });
+
+      emptyState.style.display = visibleHomes ? "none" : "block";
+      searchStatus.textContent = visibleHomes
+        ? `${visibleHomes} sommerhus${visibleHomes === 1 ? "" : "e"} passer til jeres søgning. Datoer bekræftes ved booking.`
+        : "Ingen sommerhuse matcher endnu. Prøv en anden destination eller færre gæster.";
+      document.querySelector("#sommerhuse").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  </script>
 </body>
 </html>
