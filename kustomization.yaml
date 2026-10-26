@@ -5,6 +5,7 @@ resources:
   - manifests/deployment.yaml
   - manifests/service.yaml
   - manifests/hpa.yaml
+  - manifests/pdb.yaml
   - manifests/ingress.yaml
 configMapGenerator:
   - name: argotest-page
