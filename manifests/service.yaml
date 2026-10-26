@@ -1,1 +1,14 @@
-
+apiVersion: v1
+kind: Service
+metadata:
+  name: argotest
+  namespace: argotest
+spec:
+  type: ClusterIP
+  selector:
+    app: argotest
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP

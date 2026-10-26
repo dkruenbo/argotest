@@ -1,1 +1,702 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Floorplan Signature Counter</title>
+  <!-- pdf-lib for writing annotated PDF download -->
+  <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f4f6f9;
+      color: #1a1a2e;
+      min-height: 100vh;
+      padding: 40px 16px 60px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      padding: 36px 40px;
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 4px; }
+    .subtitle { color: #666; font-size: 0.9rem; margin-bottom: 28px; }
+
+    .field { margin-bottom: 20px; }
+    label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: #333; }
+
+    .drop-zone {
+      border: 2px dashed #c0c8d8;
+      border-radius: 8px;
+      padding: 28px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      background: #fafbfd;
+    }
+    .drop-zone:hover, .drop-zone.over { border-color: #4a6cf7; background: #f0f3ff; }
+    .drop-zone.has-file { border-color: #22c55e; background: #f0fdf4; }
+    .drop-zone input[type="file"] { display: none; }
+    .drop-icon { font-size: 2rem; margin-bottom: 8px; }
+    .drop-text { color: #555; font-size: 0.9rem; }
+    .drop-text span { color: #4a6cf7; font-weight: 600; cursor: pointer; }
+    .file-name { font-size: 0.85rem; color: #22c55e; font-weight: 600; margin-top: 6px; }
+
+    textarea {
+      width: 100%;
+      border: 1px solid #d0d7e3;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 0.9rem;
+      font-family: monospace;
+      resize: vertical;
+      min-height: 100px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    textarea:focus { border-color: #4a6cf7; box-shadow: 0 0 0 3px rgba(74,108,247,0.1); }
+    .hint { font-size: 0.78rem; color: #888; margin-top: 4px; }
+
+    .btn-primary {
+      width: 100%;
+      background: #4a6cf7;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-primary:hover { background: #3a5ce6; }
+    .btn-primary:disabled { background: #a0aec0; cursor: not-allowed; }
+
+    .btn-secondary {
+      background: #f0f3ff;
+      color: #4a6cf7;
+      border: 1.5px solid #c0ccff;
+      border-radius: 8px;
+      padding: 9px 18px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-secondary:hover { background: #e0e8ff; }
+    .btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-download {
+      background: #f0fdf4;
+      color: #16a34a;
+      border: 1.5px solid #86efac;
+      border-radius: 8px;
+      padding: 9px 18px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-download:hover { background: #dcfce7; }
+    .btn-download:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .spinner {
+      display: none;
+      width: 18px; height: 18px;
+      border: 3px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #results { margin-top: 28px; }
+    .results-header { font-size: 0.95rem; font-weight: 600; color: #333; margin-bottom: 12px; }
+    .results-file { font-size: 0.8rem; color: #888; margin-bottom: 14px; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th { text-align: left; padding: 8px 12px; background: #f4f6f9; color: #555; font-weight: 600; border-bottom: 2px solid #e2e8f0; }
+    td { padding: 10px 12px; border-bottom: 1px solid #f0f2f7; }
+    tr:last-child td { border-bottom: none; }
+
+    .color-swatch {
+      display: inline-block;
+      width: 12px; height: 12px;
+      border-radius: 3px;
+      vertical-align: middle;
+      margin-right: 6px;
+      border: 1px solid rgba(0,0,0,0.12);
+    }
+
+    .count-badge {
+      display: inline-block;
+      background: #4a6cf7;
+      color: #fff;
+      border-radius: 20px;
+      padding: 2px 12px;
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
+    .count-zero { background: #e2e8f0; color: #888; }
+
+    .error-msg {
+      background: #fff0f0;
+      border: 1px solid #fca5a5;
+      color: #b91c1c;
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 0.9rem;
+    }
+
+    .progress-bar-wrap { height: 4px; background: #e2e8f0; border-radius: 4px; margin-top: 16px; overflow: hidden; }
+    .progress-bar { height: 100%; background: #4a6cf7; width: 0%; transition: width 0.15s; }
+
+    /* ── Highlights section ── */
+    #highlightsOuter {
+      display: none;
+      max-width: 1400px;
+      margin: 28px auto 0;
+      padding: 0 16px;
+    }
+
+    .highlights-title { font-size: 1.1rem; font-weight: 700; color: #1a1a2e; margin-bottom: 6px; }
+    .render-status { font-size: 0.82rem; color: #888; margin-bottom: 18px; }
+
+    .page-block {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      padding: 20px;
+      margin-bottom: 20px;
+      overflow-x: auto;
+    }
+
+    .page-header {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #444;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .page-match-pill {
+      font-size: 0.76rem;
+      background: #f0f3ff;
+      color: #4a6cf7;
+      border-radius: 20px;
+      padding: 2px 10px;
+      font-weight: 600;
+    }
+
+    .page-block canvas { display: block; }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h1>Floorplan Signature Counter</h1>
+    <p class="subtitle">Upload a PDF and enter the labels you want to count. Runs entirely in your browser — no data is sent anywhere.</p>
+
+    <form id="form">
+      <div class="field">
+        <label>PDF File</label>
+        <div class="drop-zone" id="dropZone">
+          <input type="file" id="pdfInput" accept=".pdf" />
+          <div class="drop-icon">📄</div>
+          <div class="drop-text">Drag &amp; drop a PDF here, or <span onclick="document.getElementById('pdfInput').click()">browse</span></div>
+          <div class="file-name" id="fileName"></div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="labels">Labels to count</label>
+        <textarea id="labels" placeholder="PB.01&#10;PB.02&#10;Toilet&#10;Meeting room"></textarea>
+        <div class="hint">One label per line. Labels are case-sensitive.</div>
+      </div>
+
+      <button type="submit" class="btn-primary" id="submitBtn">
+        <span id="btnText">Count Labels</span>
+        <div class="spinner" id="spinner"></div>
+      </button>
+    </form>
+
+    <div id="results"></div>
+  </div>
+
+  <div id="highlightsOuter">
+    <div class="highlights-title">Highlighted Pages</div>
+    <div class="render-status" id="renderStatus"></div>
+    <div id="highlightPages"></div>
+  </div>
+
+  <script type="module">
+    import * as pdfjsLib from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs';
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs';
+
+    // One semi-transparent fill + one solid color per label (up to 6)
+    const FILL_COLORS = [
+      'rgba(255, 210,   0, 0.42)', // 1  yellow
+      'rgba( 64, 160, 255, 0.42)', // 2  blue
+      'rgba(255,  80, 150, 0.42)', // 3  pink
+      'rgba( 60, 210, 110, 0.42)', // 4  green
+      'rgba(255, 130,  40, 0.42)', // 5  orange
+      'rgba(160,  80, 255, 0.42)', // 6  purple
+      'rgba(  0, 210, 210, 0.42)', // 7  cyan
+      'rgba(255,  60,  60, 0.42)', // 8  red
+      'rgba(140, 200,  60, 0.42)', // 9  lime
+      'rgba(255, 170,   0, 0.42)', // 10 amber
+      'rgba( 20, 180, 160, 0.42)', // 11 teal
+      'rgba(220,  80, 220, 0.42)', // 12 magenta
+      'rgba( 80, 120, 255, 0.42)', // 13 indigo
+      'rgba(255, 220, 100, 0.42)', // 14 light yellow
+      'rgba(100, 200, 140, 0.42)', // 15 mint
+    ];
+    const SOLID_COLORS = [
+      '#ffd200','#40a0ff','#ff5096','#3cd26e','#ff8228','#a050ff',
+      '#00d2d2','#ff3c3c','#8cc83c','#ffaa00','#14b4a0','#dc50dc',
+      '#5078ff','#ffdc64','#64c88c',
+    ];
+
+    // Stored state for highlight rendering (set after counting)
+    let storedPdf           = null;
+    let storedArrayBuffer   = null; // kept for pdf-lib download
+    let storedFileName      = null;
+    let storedPageMatchData = null; // Map<pageNum, [{label, items[]}]>
+    let storedLabelColors   = null; // {label: colorIndex}
+    let storedCounts        = null; // {label: count}
+    let storedLabels        = null; // ordered label list
+
+    // ── Drag & drop ──────────────────────────────────────────────
+    const dropZone   = document.getElementById('dropZone');
+    const pdfInput   = document.getElementById('pdfInput');
+    const fileNameEl = document.getElementById('fileName');
+
+    function setFile(file) {
+      if (!file || !file.name.toLowerCase().endsWith('.pdf')) return;
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      pdfInput.files = dt.files;
+      fileNameEl.textContent = file.name;
+      dropZone.classList.add('has-file');
+    }
+
+    pdfInput.addEventListener('change', () => setFile(pdfInput.files[0]));
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('over'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('over'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.classList.remove('over');
+      setFile(e.dataTransfer.files[0]);
+    });
+
+    // ── Form submit: count + collect hit positions ────────────────
+    document.getElementById('form').addEventListener('submit', async e => {
+      e.preventDefault();
+
+      const resultsDiv     = document.getElementById('results');
+      const highlightsOuter = document.getElementById('highlightsOuter');
+      const btn     = document.getElementById('submitBtn');
+      const btnText = document.getElementById('btnText');
+      const spinner = document.getElementById('spinner');
+
+      resultsDiv.innerHTML = '';
+      highlightsOuter.style.display = 'none';
+      storedPdf = null;
+
+      const file = pdfInput.files[0];
+      if (!file) { showError('Please select a PDF file.'); return; }
+
+      const labels = document.getElementById('labels').value
+        .split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      if (!labels.length) { showError('Please enter at least one label.'); return; }
+
+      // Assign a fixed color index to each label
+      const labelColors = {};
+      labels.forEach((l, i) => { labelColors[l] = i % FILL_COLORS.length; });
+
+      btn.disabled = true;
+      btnText.textContent = 'Processing…';
+      spinner.style.display = 'block';
+      resultsDiv.innerHTML = `<div class="progress-bar-wrap"><div class="progress-bar" id="prog"></div></div>`;
+
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        storedArrayBuffer = arrayBuffer.slice(0); // keep a copy for pdf-lib
+        storedFileName    = file.name;
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+        const counts        = Object.fromEntries(labels.map(l => [l, 0]));
+        const pageMatchData = new Map(); // pageNum → [{label, items[]}]
+        const progBar       = document.getElementById('prog');
+
+        for (let p = 1; p <= pdf.numPages; p++) {
+          const page    = await pdf.getPage(p);
+          const content = await page.getTextContent();
+
+          // Build a flat string and a parallel array mapping each char → its text item.
+          // This lets us find exact item positions for every match.
+          let fullText     = '';
+          const charToItem = [];
+
+          for (const item of content.items) {
+            if (!item.str) continue;
+            for (let c = 0; c < item.str.length; c++) charToItem.push(item);
+            fullText += item.str;
+            charToItem.push(null); // space separator between items
+            fullText += ' ';
+          }
+
+          // Search for each label and record which items were hit
+          const pageHits = [];
+          for (const label of labels) {
+            let idx = 0;
+            while ((idx = fullText.indexOf(label, idx)) !== -1) {
+              counts[label]++;
+              const hitItems = new Set();
+              for (let k = idx; k < idx + label.length; k++) {
+                if (charToItem[k]) hitItems.add(charToItem[k]);
+              }
+              pageHits.push({ label, items: [...hitItems] });
+              idx += label.length;
+            }
+          }
+
+          if (pageHits.length > 0) pageMatchData.set(p, pageHits);
+          progBar.style.width = `${Math.round((p / pdf.numPages) * 100)}%`;
+        }
+
+        storedPdf           = pdf;
+        storedPageMatchData = pageMatchData;
+        storedLabelColors   = labelColors;
+        storedCounts        = counts;
+        storedLabels        = labels;
+
+        renderResultsTable(file.name, counts, labels, labelColors, pageMatchData.size);
+
+      } catch (err) {
+        showError('Failed to read PDF: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btnText.textContent = 'Count Labels';
+        spinner.style.display = 'none';
+      }
+    });
+
+    // ── Results table ─────────────────────────────────────────────
+    function renderResultsTable(filename, counts, labels, labelColors, matchPageCount) {
+      const rows = labels.map(label => {
+        const count = counts[label];
+        const ci    = labelColors[label];
+        return `<tr>
+          <td><span class="color-swatch" style="background:${SOLID_COLORS[ci]}"></span>${escHtml(label)}</td>
+          <td><span class="count-badge ${count === 0 ? 'count-zero' : ''}">${count}</span></td>
+        </tr>`;
+      }).join('');
+
+      const totalMatches = Object.values(counts).reduce((a, b) => a + b, 0);
+      const actionBtns = totalMatches > 0
+        ? `<div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+             <button class="btn-secondary" id="showHighlightsBtn">
+               🔍 Show highlighted pages
+               <span style="font-weight:400;opacity:0.7">(${matchPageCount} page${matchPageCount !== 1 ? 's' : ''} with matches)</span>
+             </button>
+             <button class="btn-download" id="downloadBtn">⬇ Download highlighted PDF</button>
+           </div>`
+        : '';
+
+      document.getElementById('results').innerHTML = `
+        <div class="results-header">Results</div>
+        <div class="results-file">📄 ${escHtml(filename)}</div>
+        <table>
+          <thead><tr><th>Label</th><th>Count</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+        ${actionBtns}`;
+
+      if (totalMatches > 0) {
+        document.getElementById('showHighlightsBtn').addEventListener('click', startHighlightRendering);
+        document.getElementById('downloadBtn').addEventListener('click', triggerDownload);
+      }
+    }
+
+    // ── Render highlighted pages ──────────────────────────────────
+    async function startHighlightRendering() {
+      const btn      = document.getElementById('showHighlightsBtn');
+      const outer    = document.getElementById('highlightsOuter');
+      const pagesDiv = document.getElementById('highlightPages');
+      const statusEl = document.getElementById('renderStatus');
+
+      btn.disabled = true;
+      btn.textContent = 'Rendering…';
+      pagesDiv.innerHTML = '';
+      outer.style.display = 'block';
+      outer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      const pageNums = [...storedPageMatchData.keys()].sort((a, b) => a - b);
+
+      for (let i = 0; i < pageNums.length; i++) {
+        const pageNum = pageNums[i];
+        statusEl.textContent = `Rendering page ${pageNum} (${i + 1} / ${pageNums.length})…`;
+
+        const hits   = storedPageMatchData.get(pageNum);
+        const canvas = await renderHighlightedPage(storedPdf, pageNum, hits, storedLabelColors);
+
+        const block = document.createElement('div');
+        block.className = 'page-block';
+        block.innerHTML = `<div class="page-header">
+          Page ${pageNum}
+          <span class="page-match-pill">${hits.length} match${hits.length !== 1 ? 'es' : ''}</span>
+        </div>`;
+        block.appendChild(canvas);
+        pagesDiv.appendChild(block);
+      }
+
+      statusEl.textContent = `${pageNums.length} page${pageNums.length !== 1 ? 's' : ''} rendered`;
+      btn.disabled = false;
+      btn.textContent = '🔍 Refresh highlights';
+    }
+
+    async function renderHighlightedPage(pdf, pageNum, hits, labelColors) {
+      const page     = await pdf.getPage(pageNum);
+      const viewport = page.getViewport({ scale: 1.5 });
+
+      const canvas  = document.createElement('canvas');
+      canvas.width  = viewport.width;
+      canvas.height = viewport.height;
+      const ctx = canvas.getContext('2d');
+
+      // 1. Render the PDF page onto the canvas
+      await page.render({ canvasContext: ctx, viewport }).promise;
+
+      // 2. Draw semi-transparent highlight boxes over each matched text item
+      for (const { label, items } of hits) {
+        ctx.fillStyle = FILL_COLORS[labelColors[label]];
+
+        for (const item of items) {
+          const tx = item.transform[4];
+          const ty = item.transform[5];
+          const w  = item.width;
+          // Prefer item.height; fall back to the y-scale from the transform matrix
+          const h  = item.height || Math.abs(item.transform[3]) || 12;
+
+          // convertToViewportRectangle handles the PDF→canvas coordinate flip
+          const vr  = viewport.convertToViewportRectangle([tx, ty, tx + w, ty + h]);
+          const vpH = Math.abs(vr[3] - vr[1]);
+          const pad = Math.max(15, vpH * 0.5); // generous padding — scales with text size
+          const rx  = Math.min(vr[0], vr[2]) - pad;
+          const ry  = Math.min(vr[1], vr[3]) - pad;
+          const rw  = Math.abs(vr[2] - vr[0]) + pad * 2;
+          const rh  = vpH + pad * 2;
+          ctx.fillRect(rx, ry, rw, rh);
+        }
+      }
+
+      return canvas;
+    }
+
+    // ── Download annotated PDF via pdf-lib ──────────────────────
+    async function triggerDownload() {
+      const btn = document.getElementById('downloadBtn');
+      btn.disabled = true;
+      btn.textContent = '⏳ Generating…';
+
+      try {
+        const { PDFDocument, rgb } = PDFLib;
+
+        // RGB 0-1 values matching SOLID_COLORS
+        const PDF_COLORS = [
+          rgb(1.00, 0.82, 0.00), // 1  yellow
+          rgb(0.25, 0.63, 1.00), // 2  blue
+          rgb(1.00, 0.31, 0.59), // 3  pink
+          rgb(0.24, 0.82, 0.43), // 4  green
+          rgb(1.00, 0.51, 0.16), // 5  orange
+          rgb(0.63, 0.31, 1.00), // 6  purple
+          rgb(0.00, 0.82, 0.82), // 7  cyan
+          rgb(1.00, 0.24, 0.24), // 8  red
+          rgb(0.55, 0.78, 0.24), // 9  lime
+          rgb(1.00, 0.67, 0.00), // 10 amber
+          rgb(0.08, 0.71, 0.63), // 11 teal
+          rgb(0.86, 0.31, 0.86), // 12 magenta
+          rgb(0.31, 0.47, 1.00), // 13 indigo
+          rgb(1.00, 0.86, 0.39), // 14 light yellow
+          rgb(0.39, 0.78, 0.55), // 15 mint
+        ];
+
+        const pdfDoc = await PDFDocument.load(storedArrayBuffer);
+        const pages  = pdfDoc.getPages();
+
+        for (const [pageNum, hits] of storedPageMatchData) {
+          const page = pages[pageNum - 1];
+
+          for (const { label, items } of hits) {
+            const color = PDF_COLORS[storedLabelColors[label] % PDF_COLORS.length];
+
+            for (const item of items) {
+              const tx  = item.transform[4];
+              const ty  = item.transform[5];
+              const w   = item.width;
+              const h   = item.height || Math.abs(item.transform[3]) || 10;
+              const pad = Math.max(3, h * 0.5); // generous padding in PDF points
+
+              page.drawRectangle({
+                x:       tx - pad,
+                y:       ty - pad,
+                width:   w  + pad * 2,
+                height:  h  + pad * 2,
+                color,
+                opacity: 0.4,
+              });
+            }
+          }
+        }
+
+        // ── Append summary page ──────────────────────────────────
+        const summaryPage = pdfDoc.addPage([595, 842]); // A4 portrait
+        const { StandardFonts } = PDFLib;
+        const fontBold   = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+        const fontNormal = await pdfDoc.embedFont(StandardFonts.Helvetica);
+        const pageW = 595;
+        const pageH = 842;
+        const margin = 50;
+        const colLabel = margin;
+        const colCount = pageW - margin - 60;
+        const rowH = 28;
+
+        // Title
+        summaryPage.drawText('Label Count Summary', {
+          x: margin, y: pageH - margin - 20,
+          size: 18, font: fontBold, color: rgb(0.1, 0.1, 0.1),
+        });
+
+        // File name subtitle
+        summaryPage.drawText(storedFileName, {
+          x: margin, y: pageH - margin - 42,
+          size: 9, font: fontNormal, color: rgb(0.5, 0.5, 0.5),
+        });
+
+        // Table header
+        let y = pageH - margin - 80;
+        summaryPage.drawRectangle({
+          x: margin, y: y - 4,
+          width: pageW - margin * 2, height: rowH,
+          color: rgb(0.95, 0.96, 0.98),
+        });
+        summaryPage.drawText('Label', {
+          x: colLabel + 8, y: y + 6,
+          size: 10, font: fontBold, color: rgb(0.33, 0.33, 0.33),
+        });
+        summaryPage.drawText('Count', {
+          x: colCount + 8, y: y + 6,
+          size: 10, font: fontBold, color: rgb(0.33, 0.33, 0.33),
+        });
+        y -= rowH;
+
+        // Table rows
+        storedLabels.forEach((label, i) => {
+          const count    = storedCounts[label];
+          const ci       = storedLabelColors[label] % PDF_COLORS.length;
+          const rowColor = i % 2 === 0 ? rgb(1, 1, 1) : rgb(0.97, 0.97, 0.99);
+
+          summaryPage.drawRectangle({
+            x: margin, y: y - 4,
+            width: pageW - margin * 2, height: rowH,
+            color: rowColor,
+          });
+
+          // Color swatch
+          summaryPage.drawRectangle({
+            x: colLabel + 8, y: y + 7,
+            width: 10, height: 10,
+            color: PDF_COLORS[ci], opacity: 1,
+          });
+
+          // Label text
+          summaryPage.drawText(label, {
+            x: colLabel + 26, y: y + 6,
+            size: 10, font: fontNormal, color: rgb(0.1, 0.1, 0.1),
+            maxWidth: colCount - colLabel - 30,
+          });
+
+          // Count badge background
+          const countStr = String(count);
+          const badgeW   = Math.max(30, countStr.length * 8 + 16);
+          summaryPage.drawRectangle({
+            x: colCount + 4, y: y + 4,
+            width: badgeW, height: 18,
+            color: count > 0 ? PDF_COLORS[ci] : rgb(0.88, 0.88, 0.88),
+            opacity: count > 0 ? 0.85 : 1,
+            borderRadius: 4,
+          });
+          summaryPage.drawText(countStr, {
+            x: colCount + 4 + badgeW / 2 - (countStr.length * 4),
+            y: y + 7,
+            size: 10, font: fontBold,
+            color: count > 0 ? rgb(0.1, 0.1, 0.1) : rgb(0.5, 0.5, 0.5),
+          });
+
+          y -= rowH;
+        });
+
+        // Bottom border line
+        summaryPage.drawLine({
+          start: { x: margin, y },
+          end:   { x: pageW - margin, y },
+          thickness: 0.5,
+          color: rgb(0.8, 0.8, 0.8),
+        });
+
+        // Footer
+        summaryPage.drawText(`Generated by Floorplan Signature Counter · ${new Date().toLocaleDateString()}`, {
+          x: margin, y: margin - 10,
+          size: 8, font: fontNormal, color: rgb(0.6, 0.6, 0.6),
+        });
+
+        const pdfBytes = await pdfDoc.save();
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href     = url;
+        a.download = 'highlighted_' + storedFileName;
+        a.click();
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        showError('Failed to generate PDF: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '⬇ Download highlighted PDF';
+      }
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────
+    function showError(msg) {
+      document.getElementById('results').innerHTML =
+        `<div class="error-msg">${escHtml(msg)}</div>`;
+    }
+
+    function escHtml(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+  </script>
+</body>
+</html>
