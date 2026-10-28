@@ -1,3 +1,4 @@
+# Runs the NGINX container that serves the generated site ConfigMap.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -13,6 +14,7 @@ spec:
         app: argotest
     spec:
       topologySpreadConstraints:
+        # Prefer distributing replicas across hosts when possible.
         - maxSkew: 1
           topologyKey: kubernetes.io/hostname
           whenUnsatisfiable: ScheduleAnyway
@@ -30,18 +32,21 @@ spec:
               mountPath: /usr/share/nginx/html
               readOnly: true
           resources:
+            # Keep the container lightweight while allowing brief CPU bursts.
             requests:
               cpu: 10m
               memory: 32Mi
             limits:
               cpu: 500m
               memory: 128Mi
+          # Route traffic only to pods that can serve the page.
           readinessProbe:
             httpGet:
               path: /
               port: http
             initialDelaySeconds: 2
             periodSeconds: 5
+          # Restart the container if its HTTP endpoint stops responding.
           livenessProbe:
             httpGet:
               path: /
@@ -49,6 +54,7 @@ spec:
             initialDelaySeconds: 5
             periodSeconds: 10
       volumes:
+        # Mount generated static content as read-only web files.
         - name: web-content
           configMap:
             name: argotest-page

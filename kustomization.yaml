@@ -1,12 +1,15 @@
+# Builds all site resources in the argotest namespace.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: argotest
+# Include the app workload and its network/availability policies.
 resources:
   - manifests/deployment.yaml
   - manifests/service.yaml
   - manifests/hpa.yaml
   - manifests/pdb.yaml
   - manifests/ingress.yaml
+# Package the static page as a ConfigMap for the NGINX container.
 configMapGenerator:
   - name: argotest-page
     files:

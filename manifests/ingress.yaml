@@ -1,3 +1,4 @@
+# Routes incoming Traefik HTTP requests to the site service.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -6,6 +7,7 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
+    # Match requests for any host at the site root.
     - http:
         paths:
           - path: /

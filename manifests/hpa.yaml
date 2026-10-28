@@ -1,3 +1,4 @@
+# Scales the deployment between three and six replicas based on CPU use.
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
@@ -11,6 +12,7 @@ spec:
   minReplicas: 3
   maxReplicas: 6
   metrics:
+    # Target an average CPU utilization of 50% of requested CPU.
     - type: Resource
       resource:
         name: cpu
@@ -19,4 +21,5 @@ spec:
           averageUtilization: 50
   behavior:
     scaleDown:
+      # Avoid rapid scale-downs after a temporary drop in demand.
       stabilizationWindowSeconds: 60
